@@ -72,7 +72,8 @@ export const LiquidacionCosecha = () => {
           </div>
           <input 
             id="rendimiento-input"
-            type="number" 
+            type="text" 
+            inputMode="decimal"
             placeholder="Ej: 850"
             value={rendimientoReal}
             onChange={(e) => setRendimientoReal(e.target.value)}

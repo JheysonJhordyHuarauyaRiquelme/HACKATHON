@@ -6,7 +6,6 @@ import {
   Sprout, 
   TriangleAlert, 
   CalendarPlus, 
-  Bookmark, 
   FileText, 
   Crop, 
   Coins, 
@@ -33,6 +32,7 @@ export const PlanificadorSiembra = () => {
   const [presupuesto, setPresupuesto] = useState(150);
   const [cultivo, setCultivo] = useState('cacao');
   const datosCultivo = datosCultivos[cultivo] || datosCultivos['cacao'];
+  const [showFichaTecnica, setShowFichaTecnica] = useState(false);
   
   const [costoUnitarioUser, setCostoUnitarioUser] = useState(datosCultivo.costoUnitario);
 
@@ -88,10 +88,13 @@ export const PlanificadorSiembra = () => {
   }, [cultivo, datosCultivos]);
 
   // Dynamic Budget Calculations
-  const plantonesComprables = Math.floor(presupuesto / (costoUnitarioUser > 0 ? costoUnitarioUser : 1));
+  const numPresupuesto = parseFloat(presupuesto) || 0;
+  const numCostoUnitario = parseFloat(costoUnitarioUser) || 0;
+  const plantonesComprables = Math.floor(numPresupuesto / (numCostoUnitario > 0 ? numCostoUnitario : 1));
   const densityCalculated = Math.round(10000 / (plantDist * rowDist));
-  const densityPerHa = datosCultivo.densidadOptima || densityCalculated;
+  const densityPerHa = densityCalculated > 0 ? densityCalculated : (datosCultivo.densidadOptima || 1);
   const hectareasCubiertas = plantonesComprables / (densityPerHa || 1);
+  const coberturaPorcentaje = Math.min(100, (hectareasCubiertas / (selectedHectares > 0 ? selectedHectares : 1)) * 100);
 
   // Sync total plants input if spacing changes
   useEffect(() => {
@@ -103,16 +106,19 @@ export const PlanificadorSiembra = () => {
     actualizarCampanaActual({
       area: selectedHectares,
       hectareasCubiertas,
-      presupuesto,
-      costoUnitarioUser,
+      coberturaPorcentaje,
+      presupuesto: numPresupuesto,
+      costoUnitarioUser: numCostoUnitario,
       plantonesComprables,
       cultivo,
+      variedad,
+      nombreVariedad: selectedVariedadObj?.nombre || '',
       distSurco: rowDist,
       distPlanta: plantDist,
       densidadCalculada: densityCalculated,
-      costoEstimado: presupuesto
+      costoEstimado: plantonesComprables * numCostoUnitario
     });
-  }, [selectedHectares, hectareasCubiertas, presupuesto, costoUnitarioUser, plantonesComprables, cultivo, rowDist, plantDist, densityCalculated]);
+  }, [selectedHectares, hectareasCubiertas, coberturaPorcentaje, numPresupuesto, numCostoUnitario, plantonesComprables, cultivo, variedad, rowDist, plantDist, densityCalculated]);
 
   const handleSiguiente = () => {
     navigate('/tablero');
@@ -266,11 +272,20 @@ export const PlanificadorSiembra = () => {
               </div>
               <input 
                 id="presupuesto-input"
-                type="number"
-                min="0"
-                step="10"
+                type="text"
+                inputMode="decimal"
                 value={presupuesto}
-                onChange={(e) => setPresupuesto(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                    setPresupuesto(val);
+                  }
+                }}
+                onBlur={() => {
+                  if (presupuesto === '' || isNaN(parseFloat(presupuesto))) {
+                    setPresupuesto(0);
+                  }
+                }}
                 className="w-full h-12 pl-12 pr-12 rounded-xl bg-[#eaf7ee] text-primary text-[18px] font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-inner border border-[#22c55e]/20"
               />
               <span className="absolute right-3.5 flex items-center pointer-events-none text-primary/70">
@@ -292,11 +307,20 @@ export const PlanificadorSiembra = () => {
               </div>
               <input 
                 id="costo-unitario-input"
-                type="number"
-                min="0.1"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 value={costoUnitarioUser}
-                onChange={(e) => setCostoUnitarioUser(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                    setCostoUnitarioUser(val);
+                  }
+                }}
+                onBlur={() => {
+                  if (costoUnitarioUser === '' || isNaN(parseFloat(costoUnitarioUser))) {
+                    setCostoUnitarioUser(0.1);
+                  }
+                }}
                 className="w-full h-12 pl-12 pr-14 rounded-xl bg-[#eaf7ee] text-primary text-[18px] font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-inner border border-[#22c55e]/20"
               />
               <span className="absolute right-3.5 text-[14px] font-bold text-primary/80 pointer-events-none">/ un</span>
@@ -372,6 +396,42 @@ export const PlanificadorSiembra = () => {
                 {ha} ha
               </button>
             ))}
+          </div>
+
+          {/* Indicador Diagnóstico: Relación Presupuesto vs Terreno */}
+          <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all text-xs mt-1 ${
+            coberturaPorcentaje < 100 
+              ? 'bg-amber-50/90 border-amber-300 text-amber-950' 
+              : 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+          }`}>
+            <div className="flex items-center justify-between font-bold gap-2">
+              <div className="flex items-center gap-1.5 text-[12px]">
+                {coberturaPorcentaje < 100 ? (
+                  <TriangleAlert size={16} className="text-amber-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                )}
+                <span>
+                  {coberturaPorcentaje < 100 
+                    ? `⚠️ Tu presupuesto solo cubre el ${coberturaPorcentaje < 10 ? coberturaPorcentaje.toFixed(1) : Math.round(coberturaPorcentaje)}% de tu terreno`
+                    : `✅ Tu presupuesto cubre el 100% de tu terreno`
+                  }
+                </span>
+              </div>
+              <span className="shrink-0 font-extrabold text-[11px] bg-white/80 px-2 py-0.5 rounded-md border border-black/10">
+                {hectareasCubiertas.toFixed(2)} / {selectedHectares.toFixed(1)} ha
+              </span>
+            </div>
+
+            {/* Barra Visual de Cobertura */}
+            <div className="w-full h-2 bg-black/10 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-300 ${
+                  coberturaPorcentaje < 20 ? 'bg-amber-500' : coberturaPorcentaje < 100 ? 'bg-amber-600' : 'bg-emerald-600'
+                }`}
+                style={{ width: `${Math.max(4, Math.min(100, coberturaPorcentaje))}%` }}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -485,16 +545,30 @@ export const PlanificadorSiembra = () => {
             <div className="flex items-center bg-surface-container-low rounded-xl px-4 py-2 border border-outline-variant/40 w-full min-w-0">
               <Tag size={18} className="text-on-surface-variant mr-2 shrink-0" />
               <input 
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={totalPlantsInput}
                 onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
-                  setTotalPlantsInput(val);
-                  if (val > 0 && selectedHectares > 0) {
-                    const calcDens = Math.round(val / selectedHectares);
-                    const side = Math.sqrt(10000 / (calcDens || 1));
-                    setPlantDist(Math.round(side * 10) / 10);
-                    setRowDist(Math.round(side * 10) / 10);
+                  const valStr = e.target.value;
+                  if (valStr === '' || /^[0-9]*$/.test(valStr)) {
+                    setTotalPlantsInput(valStr);
+                    const val = parseInt(valStr, 10) || 0;
+                    if (val > 0 && selectedHectares > 0) {
+                      const calcDens = Math.round(val / selectedHectares);
+                      const origPlant = datosCultivo.distPlanta || 2.5;
+                      const origRow = datosCultivo.distSurco || 3.0;
+                      const ratio = origPlant / origRow;
+                      const area = 10000 / (calcDens || 1);
+                      const newRow = Math.sqrt(area / ratio);
+                      const newPlant = ratio * newRow;
+                      setPlantDist(Math.round(newPlant * 100) / 100);
+                      setRowDist(Math.round(newRow * 100) / 100);
+                    }
+                  }
+                }}
+                onBlur={() => {
+                  if (totalPlantsInput === '' || isNaN(parseInt(totalPlantsInput))) {
+                    setTotalPlantsInput(Math.round(densityCalculated * selectedHectares));
                   }
                 }}
                 className="w-full bg-transparent text-[18px] font-bold text-primary focus:outline-none"
@@ -704,9 +778,13 @@ export const PlanificadorSiembra = () => {
             </p>
           </div>
           <div className="flex items-start gap-2">
-            <CheckCircle2 size={18} className="text-primary mt-0.5 shrink-0" />
+            {coberturaPorcentaje < 100 ? (
+              <TriangleAlert size={18} className="text-amber-700 mt-0.5 shrink-0" />
+            ) : (
+              <CheckCircle2 size={18} className="text-primary mt-0.5 shrink-0" />
+            )}
             <p className="leading-snug">
-              Cubre exactamente <strong className="font-bold text-primary">{hectareasCubiertas.toFixed(2)} hectáreas</strong> con densidad óptima de {datosCultivo.densidadOptima?.toLocaleString('es-PE')} plantas/ha.
+              Cubre <strong className="font-bold text-primary">{hectareasCubiertas.toFixed(2)} hectáreas</strong> ({coberturaPorcentaje < 10 ? coberturaPorcentaje.toFixed(1) : Math.round(coberturaPorcentaje)}% de tu terreno total de {selectedHectares.toFixed(1)} ha) con densidad de {densityCalculated.toLocaleString('es-PE')} plantas/ha.
             </p>
           </div>
           <div className="flex items-start gap-2">
@@ -716,6 +794,19 @@ export const PlanificadorSiembra = () => {
             </p>
           </div>
         </div>
+
+        {/* Alerta Destacada de Diagnóstico si la Cobertura es Limitada */}
+        {coberturaPorcentaje < 100 && (
+          <div className="p-3 bg-amber-100 border border-amber-400/70 rounded-xl text-amber-950 flex items-start gap-2 text-[12px]">
+            <TriangleAlert size={18} className="text-amber-700 mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-amber-950">Alerta Diagnóstica: Cobertura Parcial</span>
+              <span>
+                Tu presupuesto solo cubre el <strong>{coberturaPorcentaje < 10 ? coberturaPorcentaje.toFixed(1) : Math.round(coberturaPorcentaje)}%</strong> de tu terreno. Te sugerimos ejecutar tu siembra en etapas o evaluar financiamiento.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Caja de Inversión Estimada */}
         <div className="p-3.5 bg-white rounded-xl border border-amber-300 shadow-sm flex flex-col gap-2 w-full min-w-0">
@@ -744,24 +835,87 @@ export const PlanificadorSiembra = () => {
           <CalendarPlus size={22} />
         </button>
 
-        <div className="grid grid-cols-2 gap-2 w-full min-w-0">
-          <button 
-            type="button"
-            onClick={handleSiguiente}
-            className="h-11 bg-surface-container-lowest hover:bg-surface-container text-primary font-bold text-[12px] rounded-xl flex items-center justify-center gap-1.5 border border-outline-variant/40 shadow-sm transition-colors active:scale-[0.99] truncate px-2"
-          >
-            <Bookmark size={18} className="shrink-0" />
-            <span className="truncate">Guardar en Mi Tablero</span>
-          </button>
-          <button 
-            type="button"
-            className="h-11 bg-surface-container-lowest hover:bg-surface-container text-primary font-bold text-[12px] rounded-xl flex items-center justify-center gap-1.5 border border-outline-variant/40 shadow-sm transition-colors active:scale-[0.99] truncate px-2"
-          >
-            <FileText size={18} className="shrink-0" />
-            <span className="truncate">Ficha técnica</span>
-          </button>
-        </div>
+        <button 
+          type="button"
+          onClick={() => setShowFichaTecnica(true)}
+          className="w-full h-11 bg-surface-container-lowest hover:bg-surface-container text-primary font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 border border-outline-variant/40 shadow-sm transition-colors active:scale-[0.99]"
+        >
+          <FileText size={18} className="shrink-0" />
+          <span>Ver Ficha Técnica del Cultivo</span>
+        </button>
       </section>
+
+      {/* MODAL FICHA TÉCNICA */}
+      {showFichaTecnica && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm" 
+            onClick={() => setShowFichaTecnica(false)} 
+          />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[70] bg-white rounded-2xl shadow-2xl max-w-md mx-auto max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white rounded-t-2xl px-4 pt-4 pb-3 border-b border-outline-variant/30 flex items-center justify-between z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#dcfce7] flex items-center justify-center">
+                  <FileText size={18} className="text-primary" />
+                </div>
+                <h3 className="text-[16px] font-bold text-on-surface">Ficha Técnica: {datosCultivo.nombre}</h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowFichaTecnica(false)} 
+                className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface text-[18px] font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-3">
+              {selectedVariedadObj && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#eaf7ee] border border-[#22c55e]/20">
+                  <Sprout size={16} className="text-primary shrink-0" />
+                  <span className="text-[13px] font-semibold text-primary">{selectedVariedadObj.nombre}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Distancia Planta</span>
+                  <span className="text-[18px] font-bold text-primary">{datosCultivo.distPlanta} m</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Distancia Surco</span>
+                  <span className="text-[18px] font-bold text-primary">{datosCultivo.distSurco} m</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Densidad Óptima</span>
+                  <span className="text-[18px] font-bold text-primary">{datosCultivo.densidadOptima?.toLocaleString('es-PE')}</span>
+                  <span className="text-[11px] text-on-surface-variant">plantas/ha</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Patrón</span>
+                  <span className="text-[18px] font-bold text-primary">{datosCultivo.forma}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Precio Mercado</span>
+                  <span className="text-[18px] font-bold text-primary">S/. {datosCultivo.precioMercado}</span>
+                  <span className="text-[11px] text-on-surface-variant">por kg</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Costo Unitario</span>
+                  <span className="text-[18px] font-bold text-primary">S/. {datosCultivo.costoUnitario}</span>
+                  <span className="text-[11px] text-on-surface-variant">por plantón</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-[#eaf7ee] border border-[#22c55e]/20 flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-[#166534] uppercase">Etapas de Cultivo</span>
+                <span className="text-[14px] font-bold text-primary">{datosCultivo.etapasTotales} etapas</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant">
+                <Info size={14} className="shrink-0" />
+                <span>Fuente: <strong className="text-on-surface">{datosCultivo.fuente}</strong></span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
