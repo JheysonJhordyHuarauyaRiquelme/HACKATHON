@@ -4,10 +4,10 @@ import { db } from '../services/db';
 export const AgroContext = createContext();
 
 export const datosCultivos = {
-  cacao: { nombre: 'Cacao', distSurco: 3.5, distPlanta: 3.5, forma: 'Cuadrado', densidadOptima: 1111, etapasTotales: 3, precioMercado: 12.5, fuente: 'Devida / INIA' },
-  cafe: { nombre: 'Café', distSurco: 2.0, distPlanta: 1.0, forma: 'Tresbolillo', densidadOptima: 5000, etapasTotales: 3, precioMercado: 8.0, fuente: 'Junta Nacional del Café / INIA' },
-  maiz: { nombre: 'Maíz', distSurco: 0.8, distPlanta: 0.2, forma: 'Líneas', densidadOptima: 62500, etapasTotales: 2, precioMercado: 1.5, fuente: 'INIA (Manual Maíz Amarillo Duro)' },
-  papa: { nombre: 'Papa', distSurco: 0.9, distPlanta: 0.3, forma: 'Líneas', densidadOptima: 37000, etapasTotales: 2, precioMercado: 1.2, fuente: 'INIA / SENASA' }
+  cacao: { nombre: 'Cacao', distSurco: 3.5, distPlanta: 3.5, forma: 'Cuadrado', densidadOptima: 1111, etapasTotales: 3, precioMercado: 12.5, costoUnitario: 4.50, fuente: 'Devida / INIA' },
+  cafe: { nombre: 'Café', distSurco: 2.0, distPlanta: 1.0, forma: 'Tresbolillo', densidadOptima: 5000, etapasTotales: 3, precioMercado: 8.0, costoUnitario: 1.50, fuente: 'Junta Nacional del Café / INIA' },
+  maiz: { nombre: 'Maíz', distSurco: 0.8, distPlanta: 0.2, forma: 'Líneas', densidadOptima: 62500, etapasTotales: 2, precioMercado: 1.5, costoUnitario: 0.20, fuente: 'INIA (Manual Maíz Amarillo Duro)' },
+  papa: { nombre: 'Papa', distSurco: 0.9, distPlanta: 0.3, forma: 'Líneas', densidadOptima: 37000, etapasTotales: 2, precioMercado: 1.2, costoUnitario: 0.50, fuente: 'INIA / SENASA' }
 };
 
 export const AgroProvider = ({ children }) => {
@@ -17,8 +17,10 @@ export const AgroProvider = ({ children }) => {
 
   // Estado temporal de la campaña en curso
   const [campanaActual, setCampanaActual] = useState({
-    area: '',
     presupuesto: '',
+    costoUnitarioUser: '',
+    area: '',
+    plantonesComprables: 0,
     cultivo: '',
     distSurco: '',
     distPlanta: '',
@@ -45,8 +47,10 @@ export const AgroProvider = ({ children }) => {
 
   const reiniciarCampanaActual = () => {
     setCampanaActual({
-      area: '',
       presupuesto: '',
+      costoUnitarioUser: '',
+      area: '',
+      plantonesComprables: 0,
       cultivo: '',
       distSurco: '',
       distPlanta: '',

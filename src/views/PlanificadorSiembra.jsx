@@ -7,18 +7,22 @@ export const PlanificadorSiembra = () => {
   const navigate = useNavigate();
   const { datosCultivos, campanaActual, actualizarCampanaActual } = useContext(AgroContext);
   
-  const [hectareas, setHectareas] = useState(1.0);
-  const [presupuesto, setPresupuesto] = useState(400);
+  const [presupuesto, setPresupuesto] = useState(150);
   const [cultivo, setCultivo] = useState('cacao');
-  
-  // Calculate dynamic fields
   const datosCultivo = datosCultivos[cultivo];
+  
+  const [costoUnitarioUser, setCostoUnitarioUser] = useState(datosCultivo.costoUnitario);
+
+  useEffect(() => {
+    setCostoUnitarioUser(datosCultivos[cultivo].costoUnitario);
+  }, [cultivo, datosCultivos]);
+
+  // Calculate dynamic fields
   const currentDist = datosCultivo.distSurco; // Simplified: assuming square or triangle
   const densityPerHa = datosCultivo.densidadOptima;
-  const totalPlants = Math.round(densityPerHa * hectareas);
-  const totalEstimatedCost = Math.round(totalPlants * (datosCultivo.precioMercado || 3.0));
   
-  const displayCost = presupuesto > 0 ? presupuesto : totalEstimatedCost;
+  const plantonesComprables = Math.floor(presupuesto / (costoUnitarioUser || 1));
+  const hectareasCubiertas = plantonesComprables / densityPerHa;
 
   const renderGrafico = () => {
     if (datosCultivo.forma === 'Triángulo' || datosCultivo.forma === 'Tresbolillo') {
@@ -77,15 +81,17 @@ export const PlanificadorSiembra = () => {
 
   useEffect(() => {
     actualizarCampanaActual({
-      area: hectareas,
+      area: hectareasCubiertas,
       presupuesto,
+      costoUnitarioUser,
+      plantonesComprables,
       cultivo,
       distSurco: datosCultivo.distSurco,
       distPlanta: datosCultivo.distPlanta,
       densidadCalculada: densityPerHa,
-      costoEstimado: displayCost
+      costoEstimado: presupuesto
     });
-  }, [hectareas, presupuesto, cultivo, densityPerHa, displayCost]);
+  }, [hectareasCubiertas, presupuesto, costoUnitarioUser, plantonesComprables, cultivo, densityPerHa]);
 
   const handleSiguiente = () => {
     navigate('/tablero');
@@ -125,37 +131,7 @@ export const PlanificadorSiembra = () => {
       <div className="flex flex-col gap-4 bg-surface-container-lowest rounded-xl p-4 shadow-sm">
         <div className="flex flex-col gap-1">
           <div className="flex justify-between items-baseline">
-            <label className="text-[14px] font-semibold text-on-surface" htmlFor="hectares-input">Tamaño de tu terreno</label>
-            <span className="text-[10px] font-bold text-primary uppercase">Hectáreas (ha)</span>
-          </div>
-          <div className="relative flex items-center">
-            <div className="absolute left-3.5 flex items-center pointer-events-none text-primary">
-              <Crop size={24} />
-            </div>
-            <input 
-              id="hectares-input"
-              type="number" 
-              min="0.1" step="0.1" 
-              value={hectareas}
-              onChange={(e) => setHectareas(parseFloat(e.target.value) || 0)}
-              className="w-full h-13 pl-12 pr-12 py-3 rounded-lg bg-surface-container-low text-on-surface text-[18px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary shadow-inner" 
-            />
-            <span className="absolute right-3.5 text-[14px] font-semibold text-on-surface-variant pointer-events-none">ha</span>
-          </div>
-          <div className="flex items-center gap-2 pt-1">
-            <input 
-              type="range" 
-              min="0.2" max="10" step="0.1" 
-              value={hectareas}
-              onChange={(e) => setHectareas(parseFloat(e.target.value))}
-              className="w-full accent-primary h-2 bg-surface-container-highest rounded-lg cursor-pointer" 
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between items-baseline">
-            <label className="text-[14px] font-semibold text-on-surface" htmlFor="budget-input">¿Cuánto quieres invertir en semillas/plantones?</label>
+            <label className="text-[14px] font-semibold text-on-surface" htmlFor="budget-input">Presupuesto disponible</label>
             <span className="text-[10px] font-bold text-secondary uppercase">Soles</span>
           </div>
           <div className="relative flex items-center">
@@ -165,7 +141,7 @@ export const PlanificadorSiembra = () => {
             <input 
               id="budget-input"
               type="number" 
-              min="50" step="50" 
+              min="0" step="10" 
               value={presupuesto}
               onChange={(e) => setPresupuesto(parseFloat(e.target.value) || 0)}
               className="w-full h-13 pl-14 pr-12 py-3 rounded-lg bg-surface-container-low text-on-surface text-[18px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary shadow-inner" 
@@ -173,6 +149,27 @@ export const PlanificadorSiembra = () => {
             <span className="absolute right-3.5 flex items-center pointer-events-none text-on-surface-variant">
               <Coins size={22} />
             </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between items-baseline">
+            <label className="text-[14px] font-semibold text-on-surface" htmlFor="unit-cost-input">Costo unitario por plantón/semilla</label>
+            <span className="text-[10px] font-bold text-primary uppercase">Soles</span>
+          </div>
+          <div className="relative flex items-center">
+            <div className="absolute left-3.5 flex items-center pointer-events-none text-primary font-bold">
+              S/.
+            </div>
+            <input 
+              id="unit-cost-input"
+              type="number" 
+              min="0.1" step="0.1" 
+              value={costoUnitarioUser}
+              onChange={(e) => setCostoUnitarioUser(parseFloat(e.target.value) || 0)}
+              className="w-full h-13 pl-10 pr-12 py-3 rounded-lg bg-surface-container-low text-on-surface text-[18px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary shadow-inner" 
+            />
+            <span className="absolute right-3.5 text-[14px] font-semibold text-on-surface-variant pointer-events-none">/ un</span>
           </div>
         </div>
       </div>
@@ -207,24 +204,30 @@ export const PlanificadorSiembra = () => {
           <div className="flex flex-col gap-1 p-2 rounded-lg bg-white shadow-sm">
             <div className="flex items-center gap-1.5 text-secondary">
               <Sprout size={20} />
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase">Requerimiento</span>
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase">Puedes comprar</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-semibold text-primary leading-tight">{totalPlants.toLocaleString('es-PE')}</span>
+              <span className="text-[20px] font-semibold text-primary leading-tight">{plantonesComprables.toLocaleString('es-PE')}</span>
               <span className="text-[12px] text-on-surface-variant">plantones</span>
             </div>
           </div>
           <div className="flex flex-col gap-1 p-2 rounded-lg bg-white shadow-sm">
             <div className="flex items-center gap-1.5 text-primary">
-              <Coins size={20} />
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase">Inversión req.</span>
+              <Crop size={20} />
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase">Alcanza para</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-semibold text-primary leading-tight">S/. {displayCost.toLocaleString('es-PE')}</span>
-              <span className="text-[12px] text-on-surface-variant">estimado inicial</span>
+              <span className="text-[20px] font-semibold text-primary leading-tight">{hectareasCubiertas.toFixed(3)}</span>
+              <span className="text-[12px] text-on-surface-variant">hectáreas (ha)</span>
             </div>
           </div>
         </div>
+      </div>
+      
+      <div className="bg-[#e9ffec] border border-[#6bff8f]/30 rounded-xl p-3 text-center shadow-sm -mt-2">
+        <p className="text-[13px] font-semibold text-[#00522e]">
+          Con tu presupuesto actual (S/. {presupuesto}), puedes cubrir exactamente <span className="font-bold">{hectareasCubiertas.toFixed(3)} hectáreas</span> de {datosCultivo.nombre}.
+        </p>
       </div>
 
       <div className="flex items-start gap-2 p-4 rounded-xl bg-[#cce5ff]/30 text-[#001d31] shadow-sm">
