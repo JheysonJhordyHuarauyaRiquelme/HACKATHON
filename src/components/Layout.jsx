@@ -44,7 +44,7 @@ export const Layout = () => {
             <CalendarDays size={24} />
             <span className="text-[10px] leading-[14px] font-bold mt-0.5">Liquidación</span>
           </Link>
-          <Link to="#" className="flex flex-col items-center justify-center min-w-[64px] min-h-[48px] py-1 text-on-surface-variant transition-colors">
+          <Link to="/soporte" className={`flex flex-col items-center justify-center min-w-[64px] min-h-[48px] py-1 transition-colors ${location.pathname === '/soporte' ? 'text-primary font-bold' : 'text-on-surface-variant'}`}>
             <Headset size={24} />
             <span className="text-[10px] leading-[14px] font-bold mt-0.5">Soporte</span>
           </Link>
