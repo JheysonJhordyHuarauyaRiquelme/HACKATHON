@@ -130,10 +130,6 @@ export const PlanificadorSiembra = () => {
     <div className="flex flex-col w-full gap-5 pb-8 max-w-md mx-auto min-w-0 overflow-x-hidden px-0.5">
       {/* 1. ENCABEZADO DE SECCIÓN / INTRODUCCIÓN */}
       <section className="flex flex-col gap-1.5 pt-1 w-full min-w-0">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#22c55e]/15 text-[#166534] self-start border border-[#22c55e]/30 shadow-sm">
-          <Sparkles size={14} className="text-[#166534] shrink-0" />
-          <span className="text-[11px] font-bold tracking-wider uppercase">Verificación & Diagnóstico de Terreno</span>
-        </div>
         <h1 className="text-[24px] sm:text-[26px] leading-[32px] font-bold text-primary tracking-tight">
           Diagnóstico de Terreno
         </h1>
@@ -379,7 +375,7 @@ export const PlanificadorSiembra = () => {
             step="0.5"
             value={selectedHectares}
             onChange={(e) => setSelectedHectares(parseFloat(e.target.value))}
-            className="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary"
+            className="w-full h-2 bg-[#c5e1cb] rounded-lg cursor-pointer accent-primary"
           />
           <div className="grid grid-cols-4 gap-2 w-full min-w-0">
             {[1.0, 2.5, 5.0, 20.0].map((ha) => (
@@ -757,6 +753,25 @@ export const PlanificadorSiembra = () => {
               <Sparkles size={14} className="text-primary shrink-0" />
               <span>{datosCultivo.distPlanta}m × {datosCultivo.distSurco}m en {datosCultivo.forma}</span>
             </span>
+          </div>
+
+          {/* Estimación de Surcos (Opciones A y C combinadas) */}
+          <div className="pt-2 mt-1 border-t border-outline-variant/30 flex flex-col gap-1.5 text-xs w-full min-w-0">
+            <div className="flex items-center gap-1.5 text-primary">
+              <Ruler size={14} className="shrink-0" />
+              <span className="font-bold">Estimación de Campo (Asumiendo terreno cuadrado)</span>
+            </div>
+            {(() => {
+              const areaM2 = hectareasCubiertas * 10000;
+              const lado = Math.sqrt(areaM2);
+              const numSurcos = Math.max(1, Math.floor(lado / rowDist));
+              const metrosLineales = numSurcos * lado;
+              return (
+                <p className="text-on-surface-variant leading-relaxed">
+                  Para abarcar tu área útil de <strong className="text-on-surface">{hectareasCubiertas.toFixed(2)} ha</strong>, tendrías que trazar aproximadamente <strong className="text-on-surface">{numSurcos} surcos</strong> de {lado.toFixed(0)}m de largo. Esto equivale a trabajar <strong className="text-on-surface">{metrosLineales.toLocaleString('es-PE', {maximumFractionDigits: 0})} metros lineales</strong> totales.
+                </p>
+              );
+            })()}
           </div>
         </div>
       </section>

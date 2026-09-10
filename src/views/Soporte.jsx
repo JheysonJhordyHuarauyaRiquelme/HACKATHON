@@ -281,7 +281,7 @@ export const Soporte = () => {
         {/* Mensaje Callejero / Footer Comunitario */}
         <div className="p-3 rounded-lg bg-surface-container-lowest/60 text-center flex items-center justify-center gap-2">
           <Handshake size={18} className="text-secondary" />
-          <span className="text-[12px] text-on-surface-variant">Juntos impulsando el rendimiento de tu tierra con AgroPlan Perú.</span>
+          <span className="text-[12px] text-on-surface-variant">Juntos impulsando el rendimiento de tu tierra con YACHAY.</span>
         </div>
       </div>
     </div>

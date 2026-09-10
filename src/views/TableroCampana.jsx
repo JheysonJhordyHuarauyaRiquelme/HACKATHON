@@ -71,10 +71,7 @@ export const TableroCampana = () => {
     <div className="flex flex-col w-full gap-5 pb-10 max-w-xl mx-auto">
       {/* Encabezado */}
       <div className="flex flex-col gap-1">
-        <div className="inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-full bg-primary/10 text-primary">
-          <Calendar size={15} />
-          <span className="text-[11px] font-bold tracking-wider uppercase">Calendario de Cultivo</span>
-        </div>
+
         <h2 className="text-[26px] leading-[32px] font-extrabold text-on-surface">
           {cultivoInfo.nombre}: Paso a Paso
         </h2>

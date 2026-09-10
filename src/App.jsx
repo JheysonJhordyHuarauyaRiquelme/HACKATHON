@@ -6,6 +6,7 @@ import { PlanificadorSiembra } from './views/PlanificadorSiembra';
 import { TableroCampana } from './views/TableroCampana';
 import { LiquidacionCosecha } from './views/LiquidacionCosecha';
 import { Soporte } from './views/Soporte';
+import { Historial } from './views/Historial';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="tablero" element={<TableroCampana />} />
             <Route path="liquidacion" element={<LiquidacionCosecha />} />
             <Route path="soporte" element={<Soporte />} />
+            <Route path="historial" element={<Historial />} />
           </Route>
         </Routes>
       </BrowserRouter>

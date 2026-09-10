@@ -26,6 +26,8 @@ export const db = {
         {
           id: 'c1',
           parcela_id: 'p1',
+          cultivo: 'cacao',
+          area: 3.5,
           anio: new Date().getFullYear() - 1,
           densidad_planeada: 1111,
           etapas_nutricion_completadas: 2, // De 3

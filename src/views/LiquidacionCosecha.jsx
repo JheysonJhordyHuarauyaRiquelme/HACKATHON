@@ -39,6 +39,8 @@ export const LiquidacionCosecha = () => {
     setGuardando(true);
     const nueva = await db.insertarCampana({
       parcela_id: 'p1', // Harcoded to El Naranjo for now
+      cultivo: campanaActual.cultivo || 'cacao',
+      area: campanaActual.area || 1,
       anio: new Date().getFullYear(),
       densidad_planeada: campanaActual.densidadCalculada,
       etapas_nutricion_completadas: campanaActual.etapas_nutricion_completadas,
