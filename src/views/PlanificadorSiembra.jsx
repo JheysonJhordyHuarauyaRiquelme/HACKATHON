@@ -110,6 +110,17 @@ export const PlanificadorSiembra = () => {
         </p>
       </div>
 
+      <div className="w-full h-40 rounded-xl overflow-hidden relative shadow-sm border border-outline-variant/30 mt-1">
+        <img 
+          src={`/crops/${cultivo}.jpg`} 
+          alt={`Plantación de ${datosCultivo.nombre}`} 
+          className="w-full h-full object-cover transition-opacity duration-500 ease-in-out" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-4">
+          <h3 className="text-white font-bold text-[22px] tracking-wide shadow-sm">{datosCultivo.nombre}</h3>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2">
         <span className="text-[12px] leading-[16px] font-semibold text-on-surface-variant">Selecciona cultivo principal</span>
         <div className="flex items-center gap-1 overflow-x-auto pb-1" role="radiogroup">
